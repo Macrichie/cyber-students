@@ -5,6 +5,7 @@ from tornado.gen import coroutine
 from uuid import uuid4
 
 from .base import BaseHandler
+from api.encrypt_utils import  encrypt_data, hash_password
 
 class LoginHandler(BaseHandler):
 
@@ -20,7 +21,7 @@ class LoginHandler(BaseHandler):
         }
 
         yield self.db.users.update_one({
-            'email': email
+            'email': encrypt_data(email)
         }, {
             '$set': token
         })
@@ -50,7 +51,7 @@ class LoginHandler(BaseHandler):
             return
 
         user = yield self.db.users.find_one({
-          'email': email
+          'email': encrypt_data(email)
         }, {
           'password': 1
         })
@@ -59,7 +60,7 @@ class LoginHandler(BaseHandler):
             self.send_error(403, message='The email address and password are invalid!')
             return
 
-        if user['password'] != password:
+        if user['password'] != hash_password(password):
             self.send_error(403, message='The email address and password are invalid!')
             return
 
